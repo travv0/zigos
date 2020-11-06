@@ -35,7 +35,8 @@ export fn _start() callconv(.Naked) noreturn {
 
 fn kmain() void {
     var term = Terminal.init();
-    term.write("Hello, kernel World!\n");
+    term.write("a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n");
+    term.write("Hello world!");
 }
 
 const VgaColor = enum(u4) {
@@ -83,8 +84,7 @@ const Terminal = struct {
         while (y < height) : (y += 1) {
             var x: usize = 0;
             while (x < width) : (x += 1) {
-                const index = y * width + x;
-                buffer[index] = char(' ', color);
+                buffer[Terminal.index(x, y)] = char(' ', color);
             }
         }
         return .{
@@ -95,15 +95,18 @@ const Terminal = struct {
         };
     }
 
+    inline fn index(x: usize, y: usize) usize {
+        return y * width + x;
+    }
+
     fn putAt(self: *Self, c: u8, color: u8, x: usize, y: usize) void {
-        const index = y * width + x;
-        self.buffer[index] = char(c, color);
+        self.buffer[Terminal.index(x, y)] = char(c, color);
     }
 
     fn putChar(self: *Self, c: u8) void {
         switch (c) {
             '\n' => {
-                self.row += 1;
+                self.moveDown();
                 self.col = 0;
             },
             else => {
@@ -113,10 +116,27 @@ const Terminal = struct {
         }
         if (self.col == width) {
             self.col = 0;
-            self.row += 1;
-            if (self.row == height) {
-                self.row = 0;
+            self.moveDown();
+        }
+    }
+
+    fn moveDown(self: *Self) void {
+        if (self.row == height - 1) {
+            self.scrollDown();
+        } else self.row += 1;
+    }
+
+    fn scrollDown(self: *Self) void {
+        var y: usize = 0;
+        while (y < height - 1) : (y += 1) {
+            var x: usize = 0;
+            while (x < width) : (x += 1) {
+                self.buffer[Terminal.index(x, y)] = self.buffer[Terminal.index(x, y + 1)];
             }
+        }
+        var x: usize = 0;
+        while (x < width) : (x += 1) {
+            self.buffer[Terminal.index(x, height - 1)] = char(' ', self.color);
         }
     }
 
