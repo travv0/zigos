@@ -1,53 +1,64 @@
 const std = @import("std");
+const Port = @import("port.zig").Port;
 
 pub const SerialPort = packed struct {
     const Self = @This();
 
-    data: u8,
-    interrupt_enable: u8,
-    fifo: u8,
-    line_control: u8,
-    modem_control: u8,
-    line_status: u8,
-    modem_status: u8,
-    scratch: u8,
+    data: Port(u16),
+    interrupt_enable: Port(u16),
+    fifo: Port(u16),
+    line_control: Port(u16),
+    modem_control: Port(u16),
+    line_status: Port(u16),
+    modem_status: Port(u16),
+    scratch: Port(u16),
 
-    pub fn init(port: u16) *volatile Self {
-        var serial_port = @intToPtr(*volatile SerialPort, port);
+    pub fn init(port: u16) *Self {
+        var serial_port = @intToPtr(*SerialPort, port);
 
         // disable all interrupts
-        writeToPort(serial_port.interrupt_enable, 0x00);
+        serial_port.interrupt_enable.write(0x00);
 
         // enable DLAB
-        writeToPort(serial_port.line_control, 0x00);
+        serial_port.line_control.write(0x80);
 
         // set baud rate divisor to 3
-        writeToPort(serial_port.data, 0x03);
-        writeToPort(serial_port.interrupt_enable, 0x00);
+        serial_port.data.write(0x03);
+        serial_port.interrupt_enable.write(0x00);
 
         // disable DLAB and set 8 data bits, no parity, and one stop bit
-        writeToPort(serial_port.line_control, 0x03);
+        serial_port.line_control.write(0x03);
 
         // enable FIFO, clear them, with 14-byte threshold
-        writeToPort(serial_port.fifo, 0xC7);
+        serial_port.fifo.write(0xC7);
+
+        // IRQs enabled, RTS/DSR set
+        serial_port.modem_control.write(0x0B);
+
+        // enable interrupts
+        serial_port.interrupt_enable.write(0x01);
 
         return serial_port;
     }
 
-    pub fn readByte(self: *volatile Self) u8 {
-        while (!readLineStatus(self.line_status).data_ready) {}
-        return readFromPort(self.data);
+    pub fn readByte(self: *Self) u8 {
+        while (!self.readLineStatus().data_ready) {}
+        return self.data.read();
     }
 
-    pub fn writeByte(self: *volatile Self, byte: u8) void {
-        while (!readLineStatus(self.line_status).buffer_empty) {}
-        writeToPort(self.data, byte);
+    pub fn writeByte(self: *Self, byte: u8) void {
+        while (!self.readLineStatus().buffer_empty) {}
+        self.data.write(byte);
     }
 
-    pub fn write(self: *volatile Self, bytes: []const u8) void {
+    pub fn write(self: *Self, bytes: []const u8) void {
         for (bytes) |b| {
             self.writeByte(b);
         }
+    }
+
+    pub fn readLineStatus(self: Self) LineStatus {
+        return @ptrCast(*LineStatus, &self.line_status.read()).*;
     }
 };
 
@@ -61,22 +72,3 @@ const LineStatus = packed struct {
     transmitter_empty: bool,
     impending_error: bool,
 };
-
-fn writeToPort(port: u16, value: u8) void {
-    asm volatile ("outb %[value], %[port]"
-        :
-        : [port] "{dx}" (port),
-          [value] "{al}" (value)
-    );
-}
-
-pub fn readFromPort(port: u16) u8 {
-    return asm volatile ("inb %[port], %[value]"
-        : [value] "={al}" (-> u8)
-        : [port] "{dx}" (port)
-    );
-}
-
-pub fn readLineStatus(port: u16) LineStatus {
-    return @ptrCast(*LineStatus, &readFromPort(port)).*;
-}

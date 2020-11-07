@@ -41,8 +41,7 @@ var tty: Tty = undefined;
 fn kmain() void {
     tty = Tty.init();
     var port = SerialPort.init(0x3F8);
-    port.write("Hello world!\n");
-    std.log.notice("Hello world!", .{});
+    port.writeByte('a');
 }
 
 pub fn log(
