@@ -22,7 +22,7 @@ pub fn init() void {
     tty = Tty{
         .row = 0,
         .col = 0,
-        .color = Vga.code(Vga.Color.light_brown, Vga.Color.black),
+        .color = Vga.color(Vga.Color.light_brown, Vga.Color.black),
         .buffer = @intToPtr([*]volatile u16, 0xB8000),
     };
     tty.clear();
