@@ -37,6 +37,7 @@ export fn _start() callconv(.Naked) noreturn {
 
 fn kmain() void {
     Tty.init();
+    _ = Tty.tty.write("a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n");
     std.log.info("Hello world!", .{});
     var i: u8 = 255;
     i += 1;

@@ -11,7 +11,7 @@ const height = 25;
 
 const WriteError = error{};
 
-pub const Writer = std.io.Writer(*Tty, WriteError, write);
+pub const Writer = std.io.Writer(*Tty, WriteError, writeE);
 
 row: usize,
 col: usize,
@@ -67,10 +67,7 @@ fn scrollDown(self: *Tty) void {
             self.buffer[Tty.index(x, y)] = self.buffer[Tty.index(x, y + 1)];
         }
     }
-    var x: usize = 0;
-    while (x < width) : (x += 1) {
-        self.buffer[Tty.index(x, height - 1)] = Vga.entry(' ', self.color);
-    }
+    self.clearLine();
 }
 
 pub fn clear(self: *Tty) void {
@@ -83,13 +80,24 @@ pub fn clear(self: *Tty) void {
     }
 }
 
-pub fn write(self: *Tty, data: []const u8) WriteError!usize {
+pub fn clearLine(self: *Tty) void {
+    var x: usize = 0;
+    while (x < width) : (x += 1) {
+        self.buffer[Tty.index(x, height - 1)] = Vga.entry(' ', self.color);
+    }
+}
+
+pub fn write(self: *Tty, data: []const u8) usize {
     var i: usize = 0;
     for (data) |c| {
         self.putChar(c);
         i += 1;
     }
     return i;
+}
+
+fn writeE(self: *Tty, data: []const u8) WriteError!usize {
+    return self.write(data);
 }
 
 pub fn writer(self: *Tty) Writer {
