@@ -1,5 +1,6 @@
 const std = @import("std");
 const Tty = @import("Tty.zig");
+const SerialPort = @import("serial.zig").SerialPort;
 pub const os = @import("os.zig");
 
 const ALIGN = 1 << 0;
@@ -35,12 +36,11 @@ export fn _start() callconv(.Naked) noreturn {
     while (true) {}
 }
 
+var tty: Tty = undefined;
 fn kmain() void {
-    Tty.init();
-    _ = Tty.tty.write("a\nb\nc\nd\ne\nf\ng\nh\ni\nj\nk\nl\nm\nn\no\np\nq\nr\ns\nt\nu\nv\nw\nx\ny\nz\n");
-    std.log.info("Hello world!", .{});
-    var i: u8 = 255;
-    i += 1;
+    var port = SerialPort.init(0x3F8);
+    tty = Tty.init();
+    _ = tty.write("Hello world!");
 }
 
 pub fn log(
@@ -60,13 +60,13 @@ pub fn log(
         .debug => "debug",
     };
     const prefix2 = if (scope == .default) ": " else "(" ++ @tagName(scope) ++ "): ";
-    const stderr = Tty.tty.writer();
+    const stderr = tty.writer();
     nosuspend stderr.print(level_txt ++ prefix2 ++ format ++ "\n", args) catch return;
 }
 
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace) noreturn {
     @setCold(true);
-    const writer = Tty.tty.writer();
+    const writer = tty.writer();
     try writer.writeAll("KERNEL PANIC: ");
     try writer.writeAll(msg);
     try writer.writeAll(" :(");

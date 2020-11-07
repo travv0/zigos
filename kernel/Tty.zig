@@ -3,9 +3,6 @@ const vga = @import("vga.zig");
 
 const Tty = @This();
 
-/// tty must be initialized with `init()` before use
-pub var tty: Tty = undefined;
-
 const width = 80;
 const height = 25;
 
@@ -18,14 +15,15 @@ col: usize,
 color: u8,
 buffer: [*]volatile u16,
 
-pub fn init() void {
-    tty = Tty{
+pub fn init() Tty {
+    var tty = Tty{
         .row = 0,
         .col = 0,
         .color = vga.color(vga.Color.light_brown, vga.Color.black),
         .buffer = @intToPtr([*]volatile u16, 0xB8000),
     };
     tty.clear();
+    return tty;
 }
 
 inline fn index(x: usize, y: usize) usize {
