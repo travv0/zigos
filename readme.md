@@ -1,4 +1,2 @@
-```bash
-~/code/zig/os $ zig build-exe main.zig -target i386-freestanding -static -Drelease-small -T linker.ld
-~/code/zig/os $ qemu-system-i386 -kernel main
-```
+# zigos
+Run `zig build help` for build options or `zig build run` to run the kernel (requires qemu on PATH).
