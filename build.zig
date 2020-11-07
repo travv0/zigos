@@ -12,6 +12,12 @@ pub fn build(b: *Builder) !void {
 
     const bin_name = "zigos";
 
+    const fmtPaths = [_][]const u8{ "build.zig", "kernel" };
+    const fmt = b.addFmt(&fmtPaths);
+
+    const fmt_step = b.step("fmt", "Format source files.");
+    fmt_step.dependOn(&fmt.step);
+
     const exe = b.addExecutable(bin_name, "kernel/main.zig");
     exe.setLinkerScriptPath("linker.ld");
     exe.setTarget(target);
