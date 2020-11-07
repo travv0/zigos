@@ -1,5 +1,6 @@
 const std = @import("std");
 const Tty = @import("Tty.zig");
+pub const os = @import("os.zig");
 
 const ALIGN = 1 << 0;
 const MEMINFO = 1 << 1;
@@ -35,6 +36,38 @@ export fn _start() callconv(.Naked) noreturn {
 }
 
 fn kmain() void {
-    var tty = Tty.init();
-    tty.write("Hello world!");
+    Tty.init();
+    std.log.info("Hello world!", .{});
+    var i: u8 = 255;
+    i += 1;
+}
+
+pub fn log(
+    comptime message_level: std.log.Level,
+    comptime scope: @Type(.EnumLiteral),
+    comptime format: []const u8,
+    args: anytype,
+) void {
+    const level_txt = switch (message_level) {
+        .emerg => "emergency",
+        .alert => "alert",
+        .crit => "critical",
+        .err => "error",
+        .warn => "warning",
+        .notice => "notice",
+        .info => "info",
+        .debug => "debug",
+    };
+    const prefix2 = if (scope == .default) ": " else "(" ++ @tagName(scope) ++ "): ";
+    const stderr = Tty.tty.writer();
+    nosuspend stderr.print(level_txt ++ prefix2 ++ format ++ "\n", args) catch return;
+}
+
+pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace) noreturn {
+    @setCold(true);
+    const writer = Tty.tty.writer();
+    try writer.writeAll("KERNEL PANIC: ");
+    try writer.writeAll(msg);
+    try writer.writeAll(" :(");
+    while (true) {}
 }

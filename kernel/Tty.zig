@@ -3,23 +3,29 @@ const Vga = @import("Vga.zig");
 
 const Tty = @This();
 
+/// tty must be initialized with `init()` before use
+pub var tty: Tty = undefined;
+
 const width = 80;
 const height = 25;
+
+const WriteError = error{};
+
+pub const Writer = std.io.Writer(*Tty, WriteError, write);
 
 row: usize,
 col: usize,
 color: u8,
 buffer: [*]volatile u16,
 
-pub fn init() Tty {
-    var tty = Tty{
+pub fn init() void {
+    tty = Tty{
         .row = 0,
         .col = 0,
         .color = Vga.code(Vga.Color.light_brown, Vga.Color.black),
         .buffer = @intToPtr([*]volatile u16, 0xB8000),
     };
     tty.clear();
-    return tty;
 }
 
 inline fn index(x: usize, y: usize) usize {
@@ -77,8 +83,15 @@ pub fn clear(self: *Tty) void {
     }
 }
 
-pub fn write(self: *Tty, data: []const u8) void {
+pub fn write(self: *Tty, data: []const u8) WriteError!usize {
+    var i: usize = 0;
     for (data) |c| {
         self.putChar(c);
+        i += 1;
     }
+    return i;
+}
+
+pub fn writer(self: *Tty) Writer {
+    return .{ .context = self };
 }
