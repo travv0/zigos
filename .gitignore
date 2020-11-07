@@ -3,3 +3,4 @@
 main*
 !main.zig
 zig-cache
+.DS_Store
