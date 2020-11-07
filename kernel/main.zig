@@ -1,6 +1,7 @@
 const std = @import("std");
 const Tty = @import("Tty.zig");
-const SerialPort = @import("serial.zig").SerialPort;
+const serial = @import("serial.zig");
+const SerialPort = serial.SerialPort;
 pub const os = @import("os.zig");
 
 const ALIGN = 1 << 0;
@@ -38,9 +39,10 @@ export fn _start() callconv(.Naked) noreturn {
 
 var tty: Tty = undefined;
 fn kmain() void {
-    var port = SerialPort.init(0x3F8);
     tty = Tty.init();
-    _ = tty.write("Hello world!");
+    var port = SerialPort.init(0x3F8);
+    port.write("Hello world!\n");
+    std.log.notice("Hello world!", .{});
 }
 
 pub fn log(

@@ -26,6 +26,8 @@ pub fn build(b: *Builder) !void {
 
     const run_cmd = b.addSystemCommand(&[_][]const u8{
         "qemu-system-i386",
+        "-serial",
+        "file:output.txt",
         "-kernel",
         try fs.path.join(b.allocator, &[_][]const u8{ b.exe_dir, bin_name }),
     });
