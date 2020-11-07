@@ -1,7 +1,5 @@
 const std = @include("std");
 
-const Vga = @This();
-
 pub const Color = enum(u4) {
     black = 0x0,
     blue = 0x1,
@@ -21,7 +19,7 @@ pub const Color = enum(u4) {
     white = 0xF,
 };
 
-pub inline fn color(fg: Vga.Color, bg: Vga.Color) u8 {
+pub inline fn color(fg: Color, bg: Color) u8 {
     return @as(u8, @enumToInt(fg)) | @as(u8, @enumToInt(bg)) << 4;
 }
 

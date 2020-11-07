@@ -1,5 +1,5 @@
 const std = @import("std");
-const Vga = @import("Vga.zig");
+const vga = @import("vga.zig");
 
 const Tty = @This();
 
@@ -22,7 +22,7 @@ pub fn init() void {
     tty = Tty{
         .row = 0,
         .col = 0,
-        .color = Vga.color(Vga.Color.light_brown, Vga.Color.black),
+        .color = vga.color(vga.Color.light_brown, vga.Color.black),
         .buffer = @intToPtr([*]volatile u16, 0xB8000),
     };
     tty.clear();
@@ -33,7 +33,7 @@ inline fn index(x: usize, y: usize) usize {
 }
 
 fn putAt(self: *Tty, c: u8, color: u8, x: usize, y: usize) void {
-    self.buffer[Tty.index(x, y)] = Vga.entry(c, color);
+    self.buffer[Tty.index(x, y)] = vga.entry(c, color);
 }
 
 pub fn putChar(self: *Tty, c: u8) void {
@@ -75,7 +75,7 @@ pub fn clear(self: *Tty) void {
     while (y < height) : (y += 1) {
         var x: usize = 0;
         while (x < width) : (x += 1) {
-            self.buffer[Tty.index(x, y)] = Vga.entry(' ', self.color);
+            self.buffer[Tty.index(x, y)] = vga.entry(' ', self.color);
         }
     }
 }
@@ -83,7 +83,7 @@ pub fn clear(self: *Tty) void {
 pub fn clearLine(self: *Tty) void {
     var x: usize = 0;
     while (x < width) : (x += 1) {
-        self.buffer[Tty.index(x, height - 1)] = Vga.entry(' ', self.color);
+        self.buffer[Tty.index(x, height - 1)] = vga.entry(' ', self.color);
     }
 }
 

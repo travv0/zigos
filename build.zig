@@ -15,7 +15,7 @@ pub fn build(b: *Builder) !void {
     const fmtPaths = [_][]const u8{ "build.zig", "kernel" };
     const fmt = b.addFmt(&fmtPaths);
 
-    const fmt_step = b.step("fmt", "Format source files.");
+    const fmt_step = b.step("fmt", "Format source files");
     fmt_step.dependOn(&fmt.step);
 
     const exe = b.addExecutable(bin_name, "kernel/main.zig");
@@ -34,6 +34,6 @@ pub fn build(b: *Builder) !void {
         run_cmd.addArgs(args);
     }
 
-    const run_step = b.step("run", "Run the app");
+    const run_step = b.step("run", "Run the kernel in qemu");
     run_step.dependOn(&run_cmd.step);
 }
