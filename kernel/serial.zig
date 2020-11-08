@@ -1,7 +1,7 @@
 const std = @import("std");
 const Port = @import("port.zig").Port;
 
-pub const SerialPort = packed struct {
+pub const SerialPort = struct {
     const Self = @This();
 
     const WriteError = error{};

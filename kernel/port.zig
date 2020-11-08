@@ -1,7 +1,7 @@
 const std = @import("std");
 
 pub fn Port(comptime T: type) type {
-    return packed struct {
+    return struct {
         const Self = @This();
 
         port: u16,
