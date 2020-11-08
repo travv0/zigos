@@ -57,8 +57,8 @@ pub const SerialPort = packed struct {
         }
     }
 
-    pub fn readLineStatus(self: Self) LineStatus {
-        return @ptrCast(*volatile LineStatus, &self.line_status.read()).*;
+    pub fn readLineStatus(self: *volatile Self) *volatile LineStatus {
+        return @ptrCast(*volatile LineStatus, &self.line_status.read());
     }
 };
 

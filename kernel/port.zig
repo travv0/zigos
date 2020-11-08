@@ -11,16 +11,16 @@ pub fn Port(comptime T: type) type {
         }
 
         pub fn write(self: Self, value: T) void {
-            asm volatile ("outb %[value], %[port]"
+            asm volatile ("out %[value], %[port]"
                 :
                 : [port] "{dx}" (self.port),
-                  [value] "{al}" (value)
+                  [value] "{eax}" (value)
             );
         }
 
         pub fn read(self: Self) T {
-            return asm volatile ("inb %[port], %[value]"
-                : [value] "={al}" (-> T)
+            return asm volatile ("in %[port], %[value]"
+                : [value] "={eax}" (-> T)
                 : [port] "{dx}" (self.port)
             );
         }
