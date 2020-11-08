@@ -6,7 +6,7 @@ pub fn Port(comptime T: type) type {
 
         port: u16,
 
-        fn init(port: u16) Self {
+        pub fn init(port: u16) Self {
             return .{ .port = port };
         }
 

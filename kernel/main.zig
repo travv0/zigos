@@ -38,10 +38,11 @@ export fn _start() callconv(.Naked) noreturn {
 }
 
 var tty: Tty = undefined;
+var serial_port: SerialPort = undefined;
 fn kmain() void {
     tty = Tty.init();
-    var port = SerialPort.init(0x3F8);
-    port.write("hello serial");
+    serial_port = SerialPort.init(0x3F8);
+    std.log.notice("hello there", .{});
 }
 
 pub fn log(
@@ -61,15 +62,23 @@ pub fn log(
         .debug => "debug",
     };
     const prefix2 = if (scope == .default) ": " else "(" ++ @tagName(scope) ++ "): ";
-    const stderr = tty.writer();
-    nosuspend stderr.print(level_txt ++ prefix2 ++ format ++ "\n", args) catch return;
+    const tty_writer = tty.writer();
+    const serial_writer = serial_port.writer();
+    nosuspend tty_writer.print(level_txt ++ prefix2 ++ format ++ "\n", args) catch return;
+    nosuspend serial_writer.print(level_txt ++ prefix2 ++ format ++ "\n", args) catch return;
 }
 
 pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace) noreturn {
     @setCold(true);
-    const writer = tty.writer();
+    const tty_writer = tty.writer();
+    const serial_writer = serial_port.writer();
+    printPanicMessage(tty_writer, msg);
+    printPanicMessage(serial_writer, msg);
+    while (true) {}
+}
+
+fn printPanicMessage(writer: anytype, msg: []const u8) void {
     try writer.writeAll("KERNEL PANIC: ");
     try writer.writeAll(msg);
     try writer.writeAll(" :(");
-    while (true) {}
 }

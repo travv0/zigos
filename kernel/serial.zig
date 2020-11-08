@@ -4,17 +4,31 @@ const Port = @import("port.zig").Port;
 pub const SerialPort = packed struct {
     const Self = @This();
 
+    const WriteError = error{};
+
+    pub const Writer = std.io.Writer(*Self, WriteError, writeE);
+
     data: Port(u8),
     interrupt_enable: Port(u8),
-    fifo: Port(u8),
+    fifo_control: Port(u8),
     line_control: Port(u8),
     modem_control: Port(u8),
     line_status: Port(u8),
     modem_status: Port(u8),
     scratch: Port(u8),
 
-    pub fn init(port: u16) *volatile Self {
-        var serial_port = @intToPtr(*volatile SerialPort, port);
+    pub fn init(port: u16) Self {
+        const ptr = @intToPtr([*]volatile SerialPort, port);
+        var serial_port = Self{
+            .data = Port(u8).init(@truncate(u16, @ptrToInt(ptr))),
+            .interrupt_enable = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 1))),
+            .fifo_control = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 2))),
+            .line_control = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 3))),
+            .modem_control = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 4))),
+            .line_status = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 5))),
+            .modem_status = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 6))),
+            .scratch = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 7))),
+        };
 
         // disable all interrupts
         serial_port.interrupt_enable.write(0x00);
@@ -30,7 +44,7 @@ pub const SerialPort = packed struct {
         serial_port.line_control.write(0x03);
 
         // enable FIFO, clear them, with 14-byte threshold
-        serial_port.fifo.write(0xC7);
+        serial_port.fifo_control.write(0xC7);
 
         // IRQs enabled, RTS/DSR set
         serial_port.modem_control.write(0x0B);
@@ -51,14 +65,25 @@ pub const SerialPort = packed struct {
         self.data.write(byte);
     }
 
-    pub fn write(self: *volatile Self, bytes: []const u8) void {
+    pub fn write(self: *volatile Self, bytes: []const u8) usize {
+        var i: usize = 0;
         for (bytes) |b| {
             self.writeByte(b);
+            i += 1;
         }
+        return i;
     }
 
-    pub fn readLineStatus(self: *volatile Self) *volatile LineStatus {
-        return @ptrCast(*volatile LineStatus, &self.line_status.read());
+    fn writeE(self: *Self, data: []const u8) WriteError!usize {
+        return self.write(data);
+    }
+
+    pub fn writer(self: *Self) Writer {
+        return .{ .context = self };
+    }
+
+    pub fn readLineStatus(self: Self) LineStatus {
+        return @bitCast(LineStatus, self.line_status.read());
     }
 };
 
