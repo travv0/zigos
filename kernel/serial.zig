@@ -4,17 +4,17 @@ const Port = @import("port.zig").Port;
 pub const SerialPort = packed struct {
     const Self = @This();
 
-    data: Port(u16),
-    interrupt_enable: Port(u16),
-    fifo: Port(u16),
-    line_control: Port(u16),
-    modem_control: Port(u16),
-    line_status: Port(u16),
-    modem_status: Port(u16),
-    scratch: Port(u16),
+    data: Port(u8),
+    interrupt_enable: Port(u8),
+    fifo: Port(u8),
+    line_control: Port(u8),
+    modem_control: Port(u8),
+    line_status: Port(u8),
+    modem_status: Port(u8),
+    scratch: Port(u8),
 
-    pub fn init(port: u16) *Self {
-        var serial_port = @intToPtr(*SerialPort, port);
+    pub fn init(port: u16) *volatile Self {
+        var serial_port = @intToPtr(*volatile SerialPort, port);
 
         // disable all interrupts
         serial_port.interrupt_enable.write(0x00);
@@ -41,24 +41,24 @@ pub const SerialPort = packed struct {
         return serial_port;
     }
 
-    pub fn readByte(self: *Self) u8 {
+    pub fn readByte(self: *volatile Self) u8 {
         while (!self.readLineStatus().data_ready) {}
         return self.data.read();
     }
 
-    pub fn writeByte(self: *Self, byte: u8) void {
+    pub fn writeByte(self: *volatile Self, byte: u8) void {
         while (!self.readLineStatus().buffer_empty) {}
         self.data.write(byte);
     }
 
-    pub fn write(self: *Self, bytes: []const u8) void {
+    pub fn write(self: *volatile Self, bytes: []const u8) void {
         for (bytes) |b| {
             self.writeByte(b);
         }
     }
 
     pub fn readLineStatus(self: Self) LineStatus {
-        return @ptrCast(*LineStatus, &self.line_status.read()).*;
+        return @ptrCast(*volatile LineStatus, &self.line_status.read()).*;
     }
 };
 

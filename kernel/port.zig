@@ -4,32 +4,24 @@ pub fn Port(comptime T: type) type {
     return packed struct {
         const Self = @This();
 
-        port: T,
+        port: u16,
 
-        fn init(address: T) Self {
-            return .{ .port = address };
+        fn init(port: u16) Self {
+            return .{ .port = port };
         }
 
-        pub fn write(self: Self, value: u8) void {
-            const port = if (comptime @sizeOf(@TypeOf(self.port)) < 16)
-                @as(u16, self.port)
-            else
-                self.port;
+        pub fn write(self: Self, value: T) void {
             asm volatile ("outb %[value], %[port]"
                 :
-                : [port] "{dx}" (port),
+                : [port] "{dx}" (self.port),
                   [value] "{al}" (value)
             );
         }
 
-        pub fn read(self: Self) u8 {
-            const port = if (comptime @sizeOf(@TypeOf(self.port)) < 16)
-                @as(u16, self.port)
-            else
-                self.port;
+        pub fn read(self: Self) T {
             return asm volatile ("inb %[port], %[value]"
-                : [value] "={al}" (-> u8)
-                : [port] "{dx}" (port)
+                : [value] "={al}" (-> T)
+                : [port] "{dx}" (self.port)
             );
         }
     };
