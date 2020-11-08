@@ -1,7 +1,6 @@
 const std = @import("std");
 const Tty = @import("Tty.zig");
-const serial = @import("serial.zig");
-const SerialPort = serial.SerialPort;
+const SerialPort = @import("SerialPort.zig");
 pub const os = @import("os.zig");
 
 const ALIGN = 1 << 0;
