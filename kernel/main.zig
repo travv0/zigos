@@ -42,7 +42,11 @@ var serial_port: SerialPort = undefined;
 fn kmain() void {
     tty = Tty.init();
     serial_port = SerialPort.init(0x3F8);
-    std.log.notice("hello there", .{});
+    _ = serial_port.write("enter text:\n");
+    while (true) {
+        const byte = serial_port.readByte();
+        _ = tty.write(&[_]u8{byte});
+    }
 }
 
 pub fn log(

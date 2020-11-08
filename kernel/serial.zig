@@ -18,7 +18,7 @@ pub const SerialPort = struct {
     scratch: Port(u8),
 
     pub fn init(port: u16) Self {
-        const ptr = @intToPtr([*]volatile SerialPort, port);
+        const ptr = @intToPtr([*]u8, port);
         var serial_port = Self{
             .data = Port(u8).init(@truncate(u16, @ptrToInt(ptr))),
             .interrupt_enable = Port(u8).init(@truncate(u16, @ptrToInt(ptr + 1))),
